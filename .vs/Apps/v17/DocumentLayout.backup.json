@@ -1,0 +1,77 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "E:\\Project\\DNET\\BPOI\\ALSI\\Apps\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\Project\\DNET\\BPOI\\ALSI\\Apps\\PayslipReport.aspx.vb||{2C015C70-C72C-11D0-88C3-00A0C9110049}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:PayslipReport.aspx.vb||{2C015C70-C72C-11D0-88C3-00A0C9110049}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\Project\\DNET\\BPOI\\ALSI\\Apps\\ReportSetup.aspx.vb||{2C015C70-C72C-11D0-88C3-00A0C9110049}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:ReportSetup.aspx.vb||{2C015C70-C72C-11D0-88C3-00A0C9110049}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\Project\\DNET\\BPOI\\ALSI\\Apps\\BIR2307Management.aspx.vb||{2C015C70-C72C-11D0-88C3-00A0C9110049}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:BIR2307Management.aspx.vb||{2C015C70-C72C-11D0-88C3-00A0C9110049}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 2,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "PayslipReport.aspx.vb",
+              "DocumentMoniker": "E:\\Project\\DNET\\BPOI\\ALSI\\Apps\\PayslipReport.aspx.vb",
+              "RelativeDocumentMoniker": "PayslipReport.aspx.vb",
+              "ToolTip": "E:\\Project\\DNET\\BPOI\\ALSI\\Apps\\PayslipReport.aspx.vb",
+              "RelativeToolTip": "PayslipReport.aspx.vb",
+              "ViewState": "AgIAAEgAAAAAAAAAAAAowGAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003361|",
+              "WhenOpened": "2025-03-25T11:33:26.514Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "ReportSetup.aspx.vb",
+              "DocumentMoniker": "E:\\Project\\DNET\\BPOI\\ALSI\\Apps\\ReportSetup.aspx.vb",
+              "RelativeDocumentMoniker": "ReportSetup.aspx.vb",
+              "ToolTip": "E:\\Project\\DNET\\BPOI\\ALSI\\Apps\\ReportSetup.aspx.vb",
+              "RelativeToolTip": "ReportSetup.aspx.vb",
+              "ViewState": "AQIAAOYAAAAAAAAAAAAswPwAAABwAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003361|",
+              "WhenOpened": "2025-03-25T11:33:26.517Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "BIR2307Management.aspx.vb",
+              "DocumentMoniker": "E:\\Project\\DNET\\BPOI\\ALSI\\Apps\\BIR2307Management.aspx.vb",
+              "RelativeDocumentMoniker": "BIR2307Management.aspx.vb",
+              "ToolTip": "E:\\Project\\DNET\\BPOI\\ALSI\\Apps\\BIR2307Management.aspx.vb",
+              "RelativeToolTip": "BIR2307Management.aspx.vb",
+              "ViewState": "AQIAAGUAAAAAAAAAAAAwwHcAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003361|",
+              "WhenOpened": "2025-03-25T11:33:26.519Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
