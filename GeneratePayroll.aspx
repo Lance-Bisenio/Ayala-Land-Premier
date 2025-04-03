@@ -215,7 +215,7 @@
                     <div class="row">
                         <div class="col-sm-12">
                             <div class="alert alert-info">
-                                <strong>Note:&nbsp;</strong>Before you can proceed to process the payroll, make sure that the employee master data is updated.
+                                <strong>Note:&nbsp;</strong>Make sure the employee master data is up to date before processing the payroll.
                             </div>
                         </div>
 
@@ -237,7 +237,7 @@
                             <label class="text-primary">Pay Element Recurring Template: </label>
                             <asp:FileUpload ID="TxtFileName" runat="server" CssClass="form-control-file border" />--%>
                             <br />
-                            <label class="text-primary">Pay Element One-Time Template: </label>
+                            <label class="text-primary">Provide your pay instruction template: </label>
                             <asp:FileUpload ID="TxtFileNameOneTime" runat="server" CssClass="form-control-file border" />
 
                             <br />

@@ -49,7 +49,11 @@ Partial Class GeneratePayroll
 			BtnReUpload.Disabled = True
 			BtnPost.Disabled = True
 			BtnLock.Disabled = True
-			BtnGenerateBankReport.Disabled = True
+            BtnGenerateBankReport.Disabled = True
+
+			TxtCFrom.Text = Format(CDate(Now().Month & "/01/" & Now().Year), "MM/dd/yyyy")
+			TxtCTo.Text = Format(CDate(Now().Month & "/01/" & Now().Year).AddMonths(1).AddDays(-1), "MM/dd/yyyy")
+			TxtTargetPaydate.Text = TxtCTo.Text
 		End If
 	End Sub
 
@@ -78,24 +82,27 @@ Partial Class GeneratePayroll
 			Exit Sub
 		End Try
 
-		Try
-			TempDate = CDate(TxtTargetPaydate.Text.Trim)
-		Catch ex As Exception
-			ScriptManager.RegisterStartupScript(Me, Page.GetType, "Script", "alert('Invalid payout date value. \nPlease enter correct and valid date format.'); $('#UploadFiles').modal();", True)
-			Exit Sub
-		End Try
+        Try
+            TempDate = CDate(TxtTargetPaydate.Text.Trim)
+        Catch ex As Exception
+            ScriptManager.RegisterStartupScript(Me, Page.GetType, "Script", "alert('Invalid payout date value. \nPlease enter correct and valid date format.'); $('#UploadFiles').modal();", True)
+            Exit Sub
+        End Try
 
 
-
-		vSQL = "select count(BatchNo) as Lock from tblPayInstructionHeader where DatePosted is not null and " _
+        ' To check if the target payout date is already locked
+        vSQL = "select count(BatchNo) as Lock from tblPayInstructionHeader where DatePosted is not null and " _
 			& "PayDate='" & Format(CDate(TxtTargetPaydate.Text), "MM/dd/yyyy") & "'"
 
 		LockCount = GetRef(vSQL, 0)
-		If LockCount > 0 Then
-			ScriptManager.RegisterStartupScript(Me, Page.GetType, "Script", "alert('The selected target payout date release is already locked.')", True)
-			Exit Sub
-		End If
+        If LockCount > 0 Then
+            ScriptManager.RegisterStartupScript(Me, Page.GetType, "Script", "alert('The selected target payout date release is already locked.')", True)
+            Exit Sub
+        End If
+		' End of checking if the target payout date is already locked
 
+
+		' Generate Batch Number
 		BatchNo = Format(Now(), "MMddyyyyHHmmss")
 
 		'If TxtFileName.FileName <> "" Then
@@ -106,6 +113,8 @@ Partial Class GeneratePayroll
 		'Else
 		'	RecurringFileName = "None"
 		'End If
+
+
 
 		If TxtFileNameOneTime.FileName <> "" Then
 			TargetFilenameOneTime = Server.MapPath(".") & "\Uploaded\SystemInputFiles\" & Format(Now(), "MMddyyyyHHmmss") & "-PAYInstructionOneTime-" & TxtFileNameOneTime.FileName
@@ -228,8 +237,8 @@ Partial Class GeneratePayroll
 				'=============================================================================================================== 
 				'UPDATE OLD RECURRING EARNINGS TO IN-ACTIVE
 				vSQL = "update " & TblName & " set IsActive=0 where " _
-							& "EmpCode='" & xlWorkSheet.Cells(i, 1).value & "' and " _
-							& "PayElementId='" & xlWorkSheet.Cells(i, 3).value & "'"
+					& "EmpCode='" & xlWorkSheet.Cells(i, 1).value & "' and " _
+					& "PayElementId='" & xlWorkSheet.Cells(i, 3).value & "'"
 				CreateRecords(vSQL)
 			End If
 			'=============================================================================================================== 
