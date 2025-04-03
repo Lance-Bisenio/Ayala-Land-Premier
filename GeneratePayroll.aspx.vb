@@ -54,6 +54,7 @@ Partial Class GeneratePayroll
 			TxtCFrom.Text = Format(CDate(Now().Month & "/01/" & Now().Year), "MM/dd/yyyy")
 			TxtCTo.Text = Format(CDate(Now().Month & "/01/" & Now().Year).AddMonths(1).AddDays(-1), "MM/dd/yyyy")
 			TxtTargetPaydate.Text = TxtCTo.Text
+
 		End If
 	End Sub
 
@@ -105,21 +106,10 @@ Partial Class GeneratePayroll
 		' Generate Batch Number
 		BatchNo = Format(Now(), "MMddyyyyHHmmss")
 
-		'If TxtFileName.FileName <> "" Then
-		'	TargetFilenameRecurring = Server.MapPath(".") & "\Uploaded\SystemInputFiles\" & Format(Now(), "MMddyyyyHHmmss") & "-PAYInstructionRecurring-" & TxtFileName.FileName
-		'	TxtFileName.SaveAs(TargetFilenameRecurring)
-		'	ReadExcelData(TargetFilenameRecurring, "tblPayInstructionRecurring", BatchNo, "RECURRING")
-		'	RecurringFileName = TxtFileName.FileName
-		'Else
-		'	RecurringFileName = "None"
-		'End If
-
-
-
 		If TxtFileNameOneTime.FileName <> "" Then
-			TargetFilenameOneTime = Server.MapPath(".") & "\Uploaded\SystemInputFiles\" & Format(Now(), "MMddyyyyHHmmss") & "-PAYInstructionOneTime-" & TxtFileNameOneTime.FileName
+			TargetFilenameOneTime = Server.MapPath(".") & "\Uploaded\SystemInputFiles\" & Format(Now(), "MMddyyyyHHmmss") & "-PayInstruction-" & TxtFileNameOneTime.FileName
 			TxtFileNameOneTime.SaveAs(TargetFilenameOneTime)
-			ReadExcelData(TargetFilenameOneTime, "tblPayInstruction", BatchNo, "ONETIME", "")
+			LoadOnetimeData(TargetFilenameOneTime, "tblPayInstruction", BatchNo, "ONETIME", "")
 			OneTimeFileName = TxtFileNameOneTime.FileName
 		Else
 			OneTimeFileName = "None"
@@ -131,18 +121,23 @@ Partial Class GeneratePayroll
 			& "','" & Session("uid") & "','" & Now() & "','" & CDate(TxtCFrom.Text) & "','" & CDate(TxtCTo.Text) & "')"
 
 		CreateRecords(vSQL)
-
 		GetPayrollRunList()
 
 		ScriptManager.RegisterStartupScript(Me, Page.GetType, "Script", "alert('Successfully saved');", True)
 
 	End Sub
 
-	Private Sub ReadExcelData(FilePath As String, TblName As String, BatchNo As Int64, IntructionType As String, TranType As String)
+	Private Sub LoadOnetimeData(FilePath As String, TblName As String, BatchNo As Int64, IntructionType As String, TranType As String)
 
 		Dim xlApp As Excel.Application
 		Dim xlWorkBook As Excel.Workbook
-		Dim xlWorkSheet As Excel.Worksheet
+        Dim xlWorkSheet As Excel.Worksheet
+
+        Dim AmtAdjustFrom As Decimal = 0
+        Dim AmtAdjustTo As Decimal = 0
+        Dim AmtAdjusted As Decimal = 0
+
+
 
 		Dim IsEmpty As String = ""
 		Dim TblColName As String = ""
@@ -156,15 +151,14 @@ Partial Class GeneratePayroll
 			'Response.Write(vSQL & Now)
 			CreateRecords(vSQL)
 		End If
-		'Response.Write(vSQL & Now)
 
 		xlApp = New Excel.ApplicationClass
 		xlWorkBook = xlApp.Workbooks.Open(FilePath)
 
 		Try
-			xlWorkSheet = xlWorkBook.Worksheets("Sheet1")
+			xlWorkSheet = xlWorkBook.Worksheets("OneTime")
 		Catch ex As Exception
-			ScriptManager.RegisterStartupScript(Me, Page.GetType, "Script", "alert('Sheet1 cannot be found in the uploaded file. \n\nPlease change the sheet name to Sheet1 then re-upload.');", True)
+			ScriptManager.RegisterStartupScript(Me, Page.GetType, "Script", "alert('OneTime tab not found in the uploaded file. \n\nPlease change the sheet name to OneTime then re-upload.');", True)
 			Exit Sub
 		End Try
 
@@ -181,6 +175,9 @@ Partial Class GeneratePayroll
 			Exit Sub
 		End Try
 
+		TblName = "tblPayInstructionOnetime"
+		TblColName = "BatchNo,EmpCode,ElementType,PayElement,ValidFrom,ValidTo,AmtAdjustFrom,AmtAdjustTo,AmtAdjusted,DaysCnt,Remarks,CreatedBy,DateCreated"
+
 		For i As Integer = 2 To 5000
 			IsEmpty = xlWorkSheet.Cells(i, 1).value
 
@@ -188,60 +185,89 @@ Partial Class GeneratePayroll
 				Exit For
 			End If
 
-			If IntructionType = "ONETIME" Then
-				TblColName = "BatchNo,"
-				TblColData += "(" & BatchNo & ","
-			Else
-				TblColName = ""
-				TblColData += "("
-			End If
+			'If IntructionType = "ONETIME" Then
+			'    TblColName = "BatchNo,"
+			'    TblColData += "(" & BatchNo & ","
+			'Else
+			'    TblColName = ""
+			'    TblColData += "("
+			'End If
 
 
-			'===============================================================================================================
-			' SELECT EXCEL PROPERTIES
-			'=============================================================================================================== 
-			vSQL = "select TblName, TblColName, SourceCol, Remarks from tblExcelImportProperties " _
-					& "where Active=0 and TblName='" & TblName & "' "
+			AmtAdjustFrom = IIf(xlWorkSheet.Cells(i, 5).value.ToString.Trim = "", 0, xlWorkSheet.Cells(i, 5).value)
+			AmtAdjustTo = IIf(xlWorkSheet.Cells(i, 6).value.ToString.Trim = "", 0, xlWorkSheet.Cells(i, 6).value)
+			AmtAdjusted = IIf(xlWorkSheet.Cells(i, 7).value.ToString.Trim = "", 0, xlWorkSheet.Cells(i, 7).value)
 
-			If IntructionType = "ONETIME" Then
-				vSQL += "and Remarks='ONETIME' order by SourceCol"
-			Else
-				vSQL += "and Remarks='RECURRING' order by SourceCol"
-			End If
-
-			cm.CommandText = vSQL
-
-			rs = cm.ExecuteReader
-			Do While rs.Read
-				TblColName += rs("TblColName") & ","
-				TblColData += "'" & xlWorkSheet.Cells(i, rs("SourceCol")).value & "',"
-			Loop
-			rs.Close()
+            TblColData += "(" & BatchNo & ",'"
+			TblColData += xlWorkSheet.Cells(i, 1).value & "',"  'EmpCode
+			TblColData += 0 & ",'"                              'ElementType
+            TblColData += xlWorkSheet.Cells(i, 3).value & "','" 'PayElement
+            TblColData += xlWorkSheet.Cells(i, 4).value & "','" 'ValidFrom
+			TblColData += xlWorkSheet.Cells(i, 5).value & "','" 'ValidTo
+			TblColData += AmtAdjustFrom & ","                   'AmtAdjustFrom
+			TblColData += AmtAdjustTo & ","                     'AmtAdjustTo
+			TblColData += AmtAdjusted & ","                     'AmtAdjusted
+			TblColData += 0 & ",'"                              'DaysCnt
+			TblColData += xlWorkSheet.Cells(i, 8).value & "','" 'Remarks
+			TblColData += Session("uid") & "','"                'CreatedBy
+			TblColData += Now & "'),"
 
 
 
 
 
-			'=============================================================================================================== 
-			'BUILD SQL QUERY
-			'=============================================================================================================== 
-			If IntructionType = "ONETIME" Then
-				TblColName += "CreatedBy,DateCreated,ElementType "
-				TblColData += "'" & Session("uid") & "','" & Now & "'," & IIf(IntructionType = "ONETIME", 0, 1) & "),"
-			End If
 
-			If IntructionType = "RECURRING" Then
-				TblColName += "CreatedBy,DateCreated,IsEarnings,IsActive "
-				TblColData += "'" & Session("uid") & "','" & Now & "',1,1),"
 
-				'=============================================================================================================== 
-				'UPDATE OLD RECURRING EARNINGS TO IN-ACTIVE
-				vSQL = "update " & TblName & " set IsActive=0 where " _
-					& "EmpCode='" & xlWorkSheet.Cells(i, 1).value & "' and " _
-					& "PayElementId='" & xlWorkSheet.Cells(i, 3).value & "'"
-				CreateRecords(vSQL)
-			End If
-			'=============================================================================================================== 
+
+
+
+
+
+			''===============================================================================================================
+			'' SELECT EXCEL PROPERTIES
+			''=============================================================================================================== 
+			'vSQL = "select TblName, TblColName, SourceCol, Remarks from tblExcelImportProperties " _
+			'		& "where Active=0 and TblName='" & TblName & "' "
+
+			'If IntructionType = "ONETIME" Then
+			'	vSQL += "and Remarks='ONETIME' order by SourceCol"
+			'Else
+			'	vSQL += "and Remarks='RECURRING' order by SourceCol"
+			'End If
+
+			'cm.CommandText = vSQL
+
+			'rs = cm.ExecuteReader
+			'Do While rs.Read
+			'	TblColName += rs("TblColName") & ","
+			'	TblColData += "'" & xlWorkSheet.Cells(i, rs("SourceCol")).value & "',"
+			'Loop
+			'rs.Close()
+
+
+
+
+
+			''=============================================================================================================== 
+			''BUILD SQL QUERY
+			''=============================================================================================================== 
+			'If IntructionType = "ONETIME" Then
+			'	TblColName += "CreatedBy,DateCreated,ElementType "
+			'	TblColData += "'" & Session("uid") & "','" & Now & "'," & IIf(IntructionType = "ONETIME", 0, 1) & "),"
+			'End If
+
+			'If IntructionType = "RECURRING" Then
+			'	TblColName += "CreatedBy,DateCreated,IsEarnings,IsActive "
+			'	TblColData += "'" & Session("uid") & "','" & Now & "',1,1),"
+
+			'	'=============================================================================================================== 
+			'	'UPDATE OLD RECURRING EARNINGS TO IN-ACTIVE
+			'	vSQL = "update " & TblName & " set IsActive=0 where " _
+			'		& "EmpCode='" & xlWorkSheet.Cells(i, 1).value & "' and " _
+			'		& "PayElementId='" & xlWorkSheet.Cells(i, 3).value & "'"
+			'	CreateRecords(vSQL)
+			'End If
+			''=============================================================================================================== 
 
 		Next
 
@@ -249,27 +275,31 @@ Partial Class GeneratePayroll
 		c.Dispose()
 		cm.Dispose()
 
-		TblColName = TblColName.Substring(0, TblColName.Length - 1)
-		TblColData = TblColData.Substring(0, TblColData.Length - 1)
+
+        vSQL = "insert into " & TblName & " (" & TblColName & ") values " & TblColData
+		Response.Write(vSQL)
+
+		'TblColName = TblColName.Substring(0, TblColName.Length - 1)
+		'TblColData = TblColData.Substring(0, TblColData.Length - 1)
 
 
-		If IntructionType = "ONETIME" Then
-			vSQL = "insert into " & TblName & " (" & TblColName & ") values " & TblColData
-			CreateRecords(vSQL)
-		End If
+		'If IntructionType = "ONETIME" Then
+		'	vSQL = "insert into " & TblName & " (" & TblColName & ") values " & TblColData
+		'	CreateRecords(vSQL)
+		'End If
 
 
-		'=============================================================================================================== 
-		'INSERT NEW LIST OF RECURRING EARNINGS
-		'=============================================================================================================== 
-		If IntructionType = "RECURRING" Then
-			vSQL = "insert into " & TblName & " (" & TblColName & ") values " & TblColData
-			CreateRecords(vSQL)
+		''=============================================================================================================== 
+		''INSERT NEW LIST OF RECURRING EARNINGS
+		''=============================================================================================================== 
+		'If IntructionType = "RECURRING" Then
+		'	vSQL = "insert into " & TblName & " (" & TblColName & ") values " & TblColData
+		'	CreateRecords(vSQL)
 
-			vSQL = "update " & TblName & " set ValidFrom=null, ValidTo=null where ValidFrom='1900-01-01 00:00:00.000' and ValidTo='1900-01-01 00:00:00.000'"
-			CreateRecords(vSQL)
-		End If
-		'=============================================================================================================== 
+		'	vSQL = "update " & TblName & " set ValidFrom=null, ValidTo=null where ValidFrom='1900-01-01 00:00:00.000' and ValidTo='1900-01-01 00:00:00.000'"
+		'	CreateRecords(vSQL)
+		'End If
+		''=============================================================================================================== 
 
 
 		xlWorkBook.Close()
@@ -281,6 +311,148 @@ Partial Class GeneratePayroll
 
 	End Sub
 
+	'Private Sub ReadExcelData(FilePath As String, TblName As String, BatchNo As Int64, IntructionType As String, TranType As String)
+
+	'	Dim xlApp As Excel.Application
+	'	Dim xlWorkBook As Excel.Workbook
+	'	Dim xlWorkSheet As Excel.Worksheet
+
+	'	Dim IsEmpty As String = ""
+	'	Dim TblColName As String = ""
+	'	Dim TblColData As String = ""
+	'	Dim TblTaxCol As String = ""
+	'	Dim TblTaxValue As String = ""
+	'	Dim EmpList As String = ""
+
+	'	If TranType = "ReUpload" Then
+	'		vSQL = "delete from tblPayInstruction where BatchNo='" & BatchNo & "'"
+	'		'Response.Write(vSQL & Now)
+	'		CreateRecords(vSQL)
+	'	End If
+	'	'Response.Write(vSQL & Now)
+
+	'	xlApp = New Excel.ApplicationClass
+	'	xlWorkBook = xlApp.Workbooks.Open(FilePath)
+
+	'	Try
+	'		xlWorkSheet = xlWorkBook.Worksheets("Sheet1")
+	'	Catch ex As Exception
+	'		ScriptManager.RegisterStartupScript(Me, Page.GetType, "Script", "alert('Sheet1 cannot be found in the uploaded file. \n\nPlease change the sheet name to Sheet1 then re-upload.');", True)
+	'		Exit Sub
+	'	End Try
+
+	'	Dim c As New SqlClient.SqlConnection
+	'	Dim cm As New SqlClient.SqlCommand
+	'	Dim rs As SqlClient.SqlDataReader
+	'	c.ConnectionString = ConnStr
+
+	'	Try
+	'		c.Open()
+	'		cm.Connection = c
+	'	Catch ex As SqlClient.SqlException
+	'		ScriptManager.RegisterStartupScript(Me, Page.GetType, "Script", "alert('Database connection error.');", True)
+	'		Exit Sub
+	'	End Try
+
+	'	For i As Integer = 2 To 5000
+	'		IsEmpty = xlWorkSheet.Cells(i, 1).value
+
+	'		If IsEmpty = "" Then
+	'			Exit For
+	'		End If
+
+	'		If IntructionType = "ONETIME" Then
+	'			TblColName = "BatchNo,"
+	'			TblColData += "(" & BatchNo & ","
+	'		Else
+	'			TblColName = ""
+	'			TblColData += "("
+	'		End If
+
+
+	'		'===============================================================================================================
+	'		' SELECT EXCEL PROPERTIES
+	'		'=============================================================================================================== 
+	'		vSQL = "select TblName, TblColName, SourceCol, Remarks from tblExcelImportProperties " _
+	'				& "where Active=0 and TblName='" & TblName & "' "
+
+	'		If IntructionType = "ONETIME" Then
+	'			vSQL += "and Remarks='ONETIME' order by SourceCol"
+	'		Else
+	'			vSQL += "and Remarks='RECURRING' order by SourceCol"
+	'		End If
+
+	'		cm.CommandText = vSQL
+
+	'		rs = cm.ExecuteReader
+	'		Do While rs.Read
+	'			TblColName += rs("TblColName") & ","
+	'			TblColData += "'" & xlWorkSheet.Cells(i, rs("SourceCol")).value & "',"
+	'		Loop
+	'		rs.Close()
+
+
+
+
+
+	'		'=============================================================================================================== 
+	'		'BUILD SQL QUERY
+	'		'=============================================================================================================== 
+	'		If IntructionType = "ONETIME" Then
+	'			TblColName += "CreatedBy,DateCreated,ElementType "
+	'			TblColData += "'" & Session("uid") & "','" & Now & "'," & IIf(IntructionType = "ONETIME", 0, 1) & "),"
+	'		End If
+
+	'		If IntructionType = "RECURRING" Then
+	'			TblColName += "CreatedBy,DateCreated,IsEarnings,IsActive "
+	'			TblColData += "'" & Session("uid") & "','" & Now & "',1,1),"
+
+	'			'=============================================================================================================== 
+	'			'UPDATE OLD RECURRING EARNINGS TO IN-ACTIVE
+	'			vSQL = "update " & TblName & " set IsActive=0 where " _
+	'				& "EmpCode='" & xlWorkSheet.Cells(i, 1).value & "' and " _
+	'				& "PayElementId='" & xlWorkSheet.Cells(i, 3).value & "'"
+	'			CreateRecords(vSQL)
+	'		End If
+	'		'=============================================================================================================== 
+
+	'	Next
+
+	'	c.Close()
+	'	c.Dispose()
+	'	cm.Dispose()
+
+	'	TblColName = TblColName.Substring(0, TblColName.Length - 1)
+	'	TblColData = TblColData.Substring(0, TblColData.Length - 1)
+
+
+	'	If IntructionType = "ONETIME" Then
+	'		vSQL = "insert into " & TblName & " (" & TblColName & ") values " & TblColData
+	'		CreateRecords(vSQL)
+	'	End If
+
+
+	'	'=============================================================================================================== 
+	'	'INSERT NEW LIST OF RECURRING EARNINGS
+	'	'=============================================================================================================== 
+	'	If IntructionType = "RECURRING" Then
+	'		vSQL = "insert into " & TblName & " (" & TblColName & ") values " & TblColData
+	'		CreateRecords(vSQL)
+
+	'		vSQL = "update " & TblName & " set ValidFrom=null, ValidTo=null where ValidFrom='1900-01-01 00:00:00.000' and ValidTo='1900-01-01 00:00:00.000'"
+	'		CreateRecords(vSQL)
+	'	End If
+	'	'=============================================================================================================== 
+
+
+	'	xlWorkBook.Close()
+	'	xlApp.Quit()
+
+	'	releaseObject(xlApp)
+	'	releaseObject(xlWorkBook)
+	'	releaseObject(xlWorkSheet)
+
+	'End Sub
 	Private Sub releaseObject(ByVal obj As Object)
 		Try
 			System.Runtime.InteropServices.Marshal.ReleaseComObject(obj)
@@ -1877,7 +2049,7 @@ Partial Class GeneratePayroll
 		If TxtReUploadOneTime.FileName <> "" Then
 			TargetFilenameOneTime = Server.MapPath(".") & "\Uploaded\SystemInputFiles\" & Format(Now(), "MMddyyyyHHmmss") & "-PAYInstructionOneTime-" & TxtFileNameOneTime.FileName
 			TxtReUploadOneTime.SaveAs(TargetFilenameOneTime)
-			ReadExcelData(TargetFilenameOneTime, "tblPayInstruction", BatchNo, "ONETIME", "ReUpload")
+			'ReadExcelData(TargetFilenameOneTime, "tblPayInstruction", BatchNo, "ONETIME", "ReUpload")
 			OneTimeFileName = TxtReUploadOneTime.FileName
 		Else
 			OneTimeFileName = "None"
